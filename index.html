@@ -622,15 +622,22 @@ function hojaDolar(activar){
   const v=S.cfg.cotizacion?String(S.cfg.cotizacion).replace('.',','):'';
   layer.innerHTML='<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hDol"><div class="sheet-h"><h3 id="hDol">Cotización del dólar</h3><div class="spacer"></div><button class="btn ghost" data-close="1" aria-label="Cerrar">✕</button></div>'+
    '<form class="sheet-b" id="fDol"><label class="lbl">¿A cuántos pesos está 1 dólar?<input class="field amount num" id="iCot" inputmode="decimal" autocomplete="off" placeholder="Ej: 1.450" value="'+esc(v)+'"></label>'+
+   '<div class="rate" id="dPrev" style="flex-direction:column;align-items:stretch;gap:2px;margin:0;padding:10px 12px"></div>'+
    '<span class="note">Tus movimientos se guardan siempre en pesos. Al pasar a US$, la app divide todos los montos por esta cotización, también los de meses anteriores. Usá la que vos tomes como referencia (blue, MEP u oficial) y actualizala cuando cambie.</span>'+
    '<div class="err" id="eDol"></div><button type="submit" hidden></button></form>'+
-   '<div class="sheet-f"><div class="spacer"></div><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn primary" id="bDol" type="button">'+(activar?'Guardar y ver en US$':'Guardar')+'</button></div></div></div>';
+   '<div class="sheet-f"><div class="spacer"></div><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn primary" id="bDol" type="button">'+'Ver todo en US$'+'</button></div></div></div>';
   const save=async()=>{const n=parseMonto(document.getElementById('iCot').value),e=document.getElementById('eDol');
     if(!(n>0)){e.textContent='Escribí cuántos pesos vale un dólar, por ejemplo 1450.';return}
-    try{await store.saveCfg({moneda:activar?'USD':S.cfg.moneda,cotizacion:n});cerrar();toast('Cotización guardada')}catch(err){e.textContent='No se pudo guardar. Probá de nuevo.'}};
+    try{await store.saveCfg({moneda:'USD',cotizacion:n});S.cfg={moneda:'USD',cotizacion:n};cerrar();render();toast('Mostrando todo en dólares')}catch(err){e.textContent='No se pudo guardar. Probá de nuevo.'}};
   document.getElementById('bDol').onclick=save;
   document.getElementById('fDol').onsubmit=ev=>{ev.preventDefault();save()};
-  const i=document.getElementById('iCot');try{i.focus({preventScroll:true})}catch(e){}
+  const i=document.getElementById('iCot');
+  const prev=()=>{const n=parseMonto(i.value),box=document.getElementById('dPrev'),saldo=saldoHasta(S.ym),t=totales(delMes(S.ym));
+    const u=x=>(x<0?'-':'')+'US$ '+fU.format(Math.abs(x)/n);
+    box.innerHTML=n>0?'<span class="eyebrow">Con este dólar</span><span class="num"><b>'+fmt.format(saldo)+'</b> disponibles = <b>'+u(saldo)+'</b></span><span class="num note">Este mes entró '+u(t.i)+' y salió '+u(t.g)+'</span>'
+      :'<span class="note">Escribí la cotización y acá ves al toque cuánto es tu plata en dólares.</span>'};
+  i.addEventListener('input',prev);prev();
+  try{i.focus({preventScroll:true})}catch(e){}
 }
 async function setMoneda(c){
   if(!store)return;
