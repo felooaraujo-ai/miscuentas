@@ -1,5 +1,5 @@
 // Guarda la app para que abra aunque no haya señal. Primero intenta la red; si falla, usa la copia guardada.
-const CACHE = "mis-cuentas-v3";
+const CACHE = "mis-cuentas-v4";
 self.addEventListener("install", e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(["./", "firebase-config.js", "manifest.webmanifest", "icon-192.png"]))); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", e => {

@@ -204,6 +204,13 @@ main{padding-block:16px 120px}
 }
 
 /* Ingreso */
+body.ahv .toolbar{display:none}
+.kpi.link{text-align:left;font:inherit;color:inherit;cursor:pointer}
+.kpi.link .v{color:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.two .btn{justify-content:center}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--fg)}
+.chk input{width:20px;height:20px;flex:none;margin:1px 0 0}
 body.out .toolbar,body.out .nav,body.out #app,body.out .cur,body.out #btnCuenta{display:none}
 #auth{display:none}
 body.out #auth{display:block}
@@ -263,7 +270,7 @@ body.out #auth{display:block}
     <button class="tab" data-view="movimientos" id="tab-movimientos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Movimientos</button>
     <button class="fab" id="fab" type="button" aria-label="Nuevo movimiento"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
     <button class="tab" data-view="secciones" id="tab-secciones"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Secciones</button>
-    <button class="tab" id="tab-dolar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 6.5C17 4.6 14.8 4 12 4S7 5 7 7.5 9.5 11 12 12s5 1.5 5 4.5S14.8 20 12 20s-5-.6-5-2.5"/></svg>Dólar</button>
+    <button class="tab" data-view="ahorros" id="tab-ahorros"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="12" cy="12.5" r="3.2"/><path d="M12 11v1.5M7 20v1.5M17 20v1.5"/></svg>Ahorros</button>
   </div>
 </nav>
 <div id="layer"></div>
@@ -278,7 +285,7 @@ const PALETA=['#0070F2','#16A085','#E67E22','#8E44AD','#D64545','#2C9AB7','#C9A2
 const SUGERIDAS=[
   {nombre:'Sueldo',tipo:'ingreso',on:true},{nombre:'Trabajos extra',tipo:'ingreso',on:true},{nombre:'Otros ingresos',tipo:'ingreso',on:false},
   {nombre:'Comida',tipo:'gasto',on:true},{nombre:'Supermercado',tipo:'gasto',on:true},{nombre:'Transporte',tipo:'gasto',on:true},
-  {nombre:'Servicios',tipo:'gasto',on:true},{nombre:'Salidas',tipo:'gasto',on:true},{nombre:'Ahorro',tipo:'gasto',on:true},
+  {nombre:'Servicios',tipo:'gasto',on:true},{nombre:'Salidas',tipo:'gasto',on:true},
   {nombre:'Alquiler',tipo:'gasto',on:false},{nombre:'Salud',tipo:'gasto',on:false},{nombre:'Suscripciones',tipo:'gasto',on:false},
   {nombre:'Ropa',tipo:'gasto',on:false},{nombre:'Estudio',tipo:'gasto',on:false},{nombre:'Otros gastos',tipo:'gasto',on:true}
 ];
@@ -306,7 +313,7 @@ function parseMonto(s){
 }
 function pref(k,v){try{if(v===undefined)return localStorage.getItem('mc.'+k);localStorage.setItem('mc.'+k,v)}catch(e){return null}}
 
-const S={cfg:{moneda:'ARS',cotizacion:0},movs:[],secs:null,movsReady:false,secsReady:false,view:pref('view')||'resumen',ym:hoy().slice(0,7),
+const S={aho:[],cfg:{moneda:'ARS',cotizacion:0},movs:[],secs:null,movsReady:false,secsReady:false,view:pref('view')||'resumen',ym:hoy().slice(0,7),
   fTipo:'todos',fSec:'',q:'',mode:'',stale:false};
 let store=null, downloads=true;
 
@@ -347,7 +354,7 @@ function abrir(st){
   store=st;S.mode=st.mode;document.body.classList.remove('out');
   const t=setTimeout(()=>{if(!S.movsReady||!S.secsReady){S.stale=true;render()}},10000);
   const fail=e=>{clearTimeout(t);S.movsReady=S.secsReady=true;S.error='No se pudieron leer tus datos ('+(e&&e.code||'error')+'). Recargá la página más tarde.';render()};
-  store.onMovs((list,meta)=>{S.movs=list;if(!meta.fromCache){S.movsReady=true;S.stale=false;if(S.secsReady)clearTimeout(t)}render()},fail);
+  store.onMovs((list,meta)=>{S.movs=list.filter(m=>m.tipo==='ingreso'||m.tipo==='gasto');S.aho=list.filter(m=>m.tipo==='guardar'||m.tipo==='retirar');if(!meta.fromCache){S.movsReady=true;S.stale=false;if(S.secsReady)clearTimeout(t)}render()},fail);
   store.onCfg(c=>{if(c)S.cfg={moneda:c.moneda==='USD'?'USD':'ARS',cotizacion:+c.cotizacion||0};render()});
   store.onSecs((items,meta)=>{S.secs=items;if(!meta.fromCache){S.secsReady=true;if(S.movsReady)clearTimeout(t)}render()},fail);
 }
@@ -392,8 +399,9 @@ function hojaCuenta(){
   layer.innerHTML='<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hCta"><div class="sheet-h"><h3 id="hCta">Mi cuenta</h3><div class="spacer"></div><button class="btn ghost" data-close="1" aria-label="Cerrar">✕</button></div>'+
    '<div class="sheet-b"><div><div class="eyebrow">'+(auth?'Ingresaste como':'Modo de prueba')+'</div><div style="font-weight:600;overflow-wrap:anywhere">'+esc(auth?cuentaMail:'Sin cuenta: los datos quedan solo en este navegador.')+'</div></div>'+
    '<div class="note"><b>Para tenerla en el inicio del celular:</b><br>Android (Chrome): menú ⋮ y después “Agregar a pantalla principal”.<br>iPhone (Safari): botón Compartir y después “Agregar a inicio”.</div></div>'+
-   '<div class="sheet-f"><div class="spacer"></div><button class="btn" data-close="1" type="button">Cerrar</button>'+(auth?'<button class="btn danger" id="bSalir" type="button">Cerrar sesión</button>':'')+'</div></div></div>';
+   '<div class="sheet-f"><button class="btn" id="bCot" type="button">Cotización del dólar</button><div class="spacer"></div>'+(auth?'<button class="btn danger" id="bSalir" type="button">Cerrar sesión</button>':'')+'</div></div></div>';
   const b=document.getElementById('bSalir');if(b)b.onclick=()=>auth.signOut();
+  document.getElementById('bCot').onclick=()=>hojaDolar(false);
 }
 /* ---------- Cálculos ---------- */
 const secById=id=>(S.secs||[]).find(s=>s.id===id);
@@ -401,7 +409,9 @@ const secName=id=>{const s=secById(id);return s?s.nombre:'Sin sección'};
 const secColor=id=>{const s=secById(id);return s?s.color:'#8A99AB'};
 function delMes(ym){return S.movs.filter(m=>m.fecha&&m.fecha.slice(0,7)===ym)}
 function totales(list){let i=0,g=0;list.forEach(m=>{if(m.tipo==='ingreso')i+=m.monto;else g+=m.monto});return {i,g,b:i-g}}
-function saldoHasta(ym){let b=0;S.movs.forEach(m=>{if(m.fecha.slice(0,7)<=ym)b+=m.tipo==='ingreso'?m.monto:-m.monto});return b}
+function saldoHasta(ym){let b=0;S.movs.forEach(m=>{if(m.fecha.slice(0,7)<=ym)b+=m.tipo==='ingreso'?m.monto:-m.monto});
+  S.aho.forEach(m=>{if(!m.externo&&m.fecha.slice(0,7)<=ym)b+=m.tipo==='retirar'?m.monto:-m.monto});return b}
+function totalAhorros(){return S.aho.reduce((a,m)=>a+(m.tipo==='guardar'?m.monto:-m.monto),0)}
 
 /* ---------- Render ---------- */
 const app=document.getElementById('app');
@@ -415,7 +425,9 @@ function render(){
   else if(S.stale) h+='<div class="banner">Todavía no pudimos traer tus datos. Revisá la conexión; lo que veas puede no estar actualizado.</div>';
   if(!S.movsReady||!S.secsReady){ if(!S.movs.length){app.innerHTML=h+'<div class="panel"><div class="empty"><strong>Cargando tus cuentas…</strong></div></div>';return} }
   if(S.secsReady&&S.secs===null&&!S.error){app.innerHTML=h+vOnboarding();return}
-  if(S.view==='movimientos')h+=vMovimientos();
+  document.body.classList.toggle('ahv',S.view==='ahorros');
+  if(S.view==='ahorros')h+=vAhorros();
+  else if(S.view==='movimientos')h+=vMovimientos();
   else if(S.view==='secciones')h+=vSecciones();
   else h+=vResumen();
   app.innerHTML=h;
@@ -432,6 +444,7 @@ function vKpis(){
    '<div class="kpi in"><div class="eyebrow">Entró este mes</div><div class="v num">'+money(t.i)+'</div><div class="s">'+delMes(S.ym).filter(m=>m.tipo==='ingreso').length+' ingresos</div></div>'+
    '<div class="kpi out"><div class="eyebrow">Salió este mes</div><div class="v num">'+money(t.g)+'</div><div class="s">'+comp+'</div></div>'+
    '<div class="kpi wide"><div class="eyebrow">Balance del mes</div><div class="v num" style="color:'+(t.b>=0?'var(--pos)':'var(--neg)')+'">'+(t.b>0?'+':'')+money(t.b)+'</div><div class="s">'+(ahorro===null?'Cargá un ingreso para ver tu tasa de ahorro':(ahorro>=0?'Te quedó el '+ahorro+'% de lo que entró':'Saliste '+(-ahorro)+'% por encima de lo que entró'))+'</div></div>'+
+   '<button class="kpi wide link" data-go="ahorros"><div class="eyebrow">Ahorros</div><div class="v num">'+money(totalAhorros())+'</div><div class="s">Plata guardada, aparte de la disponible. Tocá para ver.</div></button>'+
   '</div>';
 }
 
@@ -499,6 +512,46 @@ function vMov(m){
   return '<button class="mov" data-edit="'+esc(m.id)+'"><span class="ic" style="background:'+c+'">'+esc(n.slice(0,1).toUpperCase())+'</span>'+
     '<span style="min-width:0"><div class="t">'+esc(m.nota||n)+'</div><div class="d">'+esc(sub)+'</div></span>'+
     '<span class="a num '+(m.tipo==='ingreso'?'in':'out')+'">'+(m.tipo==='ingreso'?'+':'−')+money(m.monto)+'</span></button>';
+}
+function vAhorros(){
+  const tot=totalAhorros(),list=S.aho.slice().sort(ordenMov);
+  const mes=hoy().slice(0,7),delm=S.aho.filter(m=>m.fecha.slice(0,7)===mes).reduce((a,m)=>a+(m.tipo==='guardar'?m.monto:-m.monto),0);
+  return (enUsd()?'<div class="rate"><span class="num">Convertido a US$ 1 = '+fmt.format(S.cfg.cotizacion)+'</span><button class="btn ghost" data-rate="1">Cambiar</button></div>':'')+
+   '<div class="kpis"><div class="kpi main"><div class="eyebrow">Total ahorrado</div><div class="v num">'+money(tot)+'</div><div class="s">'+(list.length?'Este mes '+(delm>=0?'sumaste ':'bajó ')+money(Math.abs(delm))+'. No se reinicia con el mes.':'Tu plata quieta. No se reinicia con el mes.')+'</div></div></div>'+
+   '<div class="two"><button class="btn primary" data-aho="guardar">+ Guardar plata</button><button class="btn" data-aho="retirar"'+(tot>0?'':' disabled style="opacity:.5"')+'>− Retirar</button></div>'+
+   '<section class="panel"><div class="panel-h"><h2>Historial de ahorros</h2></div>'+
+   (list.length?list.map(m=>{const d=new Date(m.fecha+'T12:00:00'),g=m.tipo==='guardar';
+     return '<button class="mov" data-eaho="'+esc(m.id)+'"><span class="ic" style="background:'+(g?'#0070F2':'#8A99AB')+'">'+(g?'↓':'↑')+'</span>'+
+      '<span style="min-width:0"><div class="t">'+esc(m.nota||(g?'Guardado':'Retiro'))+'</div><div class="d">'+d.getDate()+' '+MESES[d.getMonth()].slice(0,3)+' '+d.getFullYear()+(m.externo?' · ya la tenía':g?' · de tu disponible':' · a tu disponible')+'</div></span>'+
+      '<span class="a num '+(g?'in':'out')+'">'+(g?'+':'−')+money(m.monto)+'</span></button>'}).join('')
+    :'<div class="empty"><strong>Todavía no guardaste nada</strong><span>Cada vez que apartes plata, anotala acá. Se descuenta de tu plata disponible y se suma a este total, que queda fijo mes a mes.</span><button class="btn primary" data-aho="guardar">+ Guardar la primera</button></div>')+'</section>';
+}
+function hojaAhorro(m,tipo){
+  const ed=!!m; m=m?Object.assign({},m):{id:uid(),tipo:tipo,monto:'',fecha:hoy(),nota:'',externo:false};
+  const g=m.tipo==='guardar';let armed=false;
+  const draw=()=>{
+    layer.innerHTML='<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hAho"><div class="sheet-h"><h3 id="hAho">'+(ed?'Editar ':'')+(g?(ed?'guardado':'Guardar plata'):(ed?'retiro':'Retirar de ahorros'))+'</h3><div class="spacer"></div><button class="btn ghost" data-close="1" aria-label="Cerrar">✕</button></div>'+
+    '<form class="sheet-b" id="fAho"><label class="lbl">Monto en pesos<input class="field amount num" id="hMonto" inputmode="decimal" autocomplete="off" placeholder="0,00" value="'+esc(typeof m.monto==='number'?String(m.monto).replace('.',','):m.monto)+'"></label>'+
+    '<div class="row2"><label class="lbl">Fecha<input class="field" type="date" id="hFecha" value="'+esc(m.fecha)+'"></label><label class="lbl">Nota (opcional)<input class="field" id="hNota" maxlength="80" placeholder="'+(g?'Ej: para la moto':'Ej: arreglo del auto')+'" value="'+esc(m.nota)+'"></label></div>'+
+    (g?'<label class="chk"><input type="checkbox" id="hExt"'+(m.externo?' checked':'')+'><span>Esta plata ya la tenía ahorrada de antes. <span class="note">Marcalo para cargar lo que ya tenías: se suma a Ahorros sin descontarse de tu plata disponible.</span></span></label>'
+      :'<span class="note">Lo que retirás vuelve a tu plata disponible. Si después lo gastás, cargalo como un gasto normal.</span>')+
+    '<div class="err" id="eAho"></div><button type="submit" hidden></button></form>'+
+    '<div class="sheet-f">'+(ed?'<button class="btn danger'+(armed?' armed':'')+'" id="hDel" type="button">'+(armed?'Tocá de nuevo para borrar':'Borrar')+'</button>':'')+'<div class="spacer"></div><button class="btn" data-close="1" type="button">Cancelar</button><button class="btn primary" id="hSave" type="button">Guardar</button></div></div></div>';
+    const keep=()=>{m.monto=document.getElementById('hMonto').value;m.fecha=document.getElementById('hFecha').value;m.nota=document.getElementById('hNota').value;const x=document.getElementById('hExt');if(x)m.externo=x.checked};
+    const del=document.getElementById('hDel');
+    if(del)del.onclick=async()=>{if(!armed){keep();armed=true;draw();return}
+      try{await store.deleteMov(m.id);cerrar();toast('Borrado')}catch(e){document.getElementById('eAho').textContent='No se pudo borrar. Probá de nuevo.'}};
+    const save=async()=>{keep();const v=parseMonto(m.monto),e=document.getElementById('eAho');
+      if(!(v>0)){e.textContent='Escribí un monto mayor a cero, por ejemplo 50000.';return}
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(m.fecha)){e.textContent='Elegí una fecha.';return}
+      if(!g){const disp=totalAhorros()+(ed?(S.aho.find(x=>x.id===m.id)||{monto:0}).monto:0);if(v>disp+0.001){e.textContent='No podés retirar más de lo que tenés ahorrado ('+fmt.format(disp)+').';return}}
+      const doc={id:m.id,tipo:m.tipo,monto:v,fecha:m.fecha,nota:(m.nota||'').trim(),externo:g?!!m.externo:false,creado:m.creado||Date.now()};
+      try{await store.saveMov(doc);cerrar();toast(g?'Plata guardada en Ahorros':'Retiro anotado')}catch(err){e.textContent='No se pudo guardar. Revisá la conexión y probá de nuevo.'}};
+    document.getElementById('hSave').onclick=save;
+    document.getElementById('fAho').onsubmit=ev=>{ev.preventDefault();save()};
+    if(!ed&&!m.monto){try{document.getElementById('hMonto').focus({preventScroll:true})}catch(e){}}
+  };
+  draw();
 }
 function vVacioMes(){
   return '<div class="empty"><strong>Todavía no cargaste nada en '+esc(ymLabel(S.ym))+'</strong><span>Anotá lo que cobrás y lo que gastás. Con un par de movimientos ya ves el resumen.</span><button class="btn primary" data-new="1">+ Cargar el primero</button></div>';
@@ -647,7 +700,6 @@ async function setMoneda(c){
 }
 /* ---------- Eventos ---------- */
 document.querySelectorAll('[data-cur]').forEach(b=>b.onclick=()=>setMoneda(b.dataset.cur));
-document.getElementById('tab-dolar').onclick=()=>hojaDolar(false);
 document.getElementById('btnCuenta').onclick=hojaCuenta;
 function nuevo(){if(!store)return;hojaMov(null)}
 document.getElementById('fab').onclick=nuevo;
@@ -661,7 +713,9 @@ app.addEventListener('click',async e=>{
   if(t.dataset.edit){const m=S.movs.find(x=>x.id===t.dataset.edit);if(m)hojaMov(m)}
   else if(t.dataset.new)nuevo();
   else if(t.dataset.rate)hojaDolar(false);
-  else if(t.dataset.go){S.view=t.dataset.go;pref('view',S.view);render()}
+  else if(t.dataset.aho){if(store)hojaAhorro(null,t.dataset.aho)}
+  else if(t.dataset.eaho){const m=S.aho.find(x=>x.id===t.dataset.eaho);if(m)hojaAhorro(m)}
+  else if(t.dataset.go){S.view=t.dataset.go;pref('view',S.view);render();window.scrollTo(0,0)}
   else if(t.dataset.ftipo){S.fTipo=t.dataset.ftipo;render()}
   else if(t.dataset.esec){hojaSec(secById(t.dataset.esec))}
   else if(t.dataset.nsec){hojaSec(null)}
@@ -670,7 +724,7 @@ app.addEventListener('click',async e=>{
     t.disabled=true;try{await store.saveSecs(items);toast('Listo, ya podés cargar movimientos')}catch(err){t.disabled=false;toast('No se pudo guardar. Probá de nuevo.')}
   }
   else if(t.id==='btnCsv'&&downloads){
-    const rows=[['fecha','tipo','seccion','monto','nota']].concat(S.movs.slice().sort((a,b)=>a.fecha<b.fecha?-1:1).map(m=>[m.fecha,m.tipo,secName(m.seccion),String(m.monto).replace('.',','),m.nota||'']));
+    const rows=[['fecha','tipo','seccion','monto','nota']].concat(S.movs.concat(S.aho).sort((a,b)=>a.fecha<b.fecha?-1:1).map(m=>[m.fecha,m.tipo,(m.tipo==='guardar'||m.tipo==='retirar')?'Ahorros':secName(m.seccion),String(m.monto).replace('.',','),m.nota||'']));
     const csv='﻿'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='mis-cuentas-'+hoy()+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
   }
